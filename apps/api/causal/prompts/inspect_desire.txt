@@ -1,0 +1,1 @@
+ACTION: Examine the selected desire-related statement. Describe the desired state, current state, and perceived gap. Explore what obtaining the outcome might serve only where supported. Include ordinary preference, practical need, social reinforcement, and compensation as tentative alternatives. Return a PathFinding.

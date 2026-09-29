@@ -1,0 +1,115 @@
+schema_version: "1"
+graph_id: causal_reflection
+graph_version: 0.1.0
+state_schema: causal.graph.state.AnalysisState
+entrypoint: ingest_turn
+terminal_nodes: [complete]
+
+budgets:
+  max_input_chars: 6000
+  max_model_attempts: 14
+  max_questions: 3
+  max_redirects: 2
+  max_repairs: 1
+  recursion_limit: 40
+  call_timeout_seconds: 25
+  soft_deadline_seconds: 180
+  hard_deadline_seconds: 240
+
+nodes:
+  - {id: ingest_turn, kind: deterministic, handler: ingest_turn}
+  - {id: safety_decision, kind: llm_decision, handler: run_decision, prompt_ref: safety_decision, output_schema: SafetyDecision}
+  - {id: segment_statements, kind: llm_action, handler: run_action, prompt_ref: segment_statements, output_schema: SegmentationResult}
+  - {id: choose_path, kind: llm_decision, handler: run_decision, prompt_ref: choose_path, output_schema: PathDecision}
+  - {id: request_focus, kind: deterministic, handler: request_focus}
+  - {id: inspect_hurt, kind: llm_action, handler: run_action, prompt_ref: inspect_hurt, output_schema: PathFinding}
+  - {id: inspect_desire, kind: llm_action, handler: run_action, prompt_ref: inspect_desire, output_schema: PathFinding}
+  - {id: inspect_fear, kind: llm_action, handler: run_action, prompt_ref: inspect_fear, output_schema: PathFinding}
+  - {id: inspect_judgement, kind: llm_action, handler: run_action, prompt_ref: inspect_judgement, output_schema: PathFinding}
+  - {id: inspect_unrelatability, kind: llm_action, handler: run_action, prompt_ref: inspect_unrelatability, output_schema: PathFinding}
+  - {id: inspect_ignorance, kind: llm_action, handler: run_action, prompt_ref: inspect_ignorance, output_schema: PathFinding}
+  - {id: inspect_general, kind: llm_action, handler: run_action, prompt_ref: inspect_general, output_schema: PathFinding}
+  - {id: choose_next, kind: llm_decision, handler: run_decision, prompt_ref: choose_next, output_schema: NextStepDecision}
+  - {id: retrieve_context, kind: retrieval, handler: retrieve_context}
+  - {id: build_hypotheses, kind: llm_action, handler: run_action, prompt_ref: build_hypotheses, output_schema: HypothesisResult}
+  - {id: decide_inquiry, kind: llm_decision, handler: run_decision, prompt_ref: decide_inquiry, output_schema: InquiryDecision}
+  - {id: compose_response, kind: llm_action, handler: run_action, prompt_ref: compose_response, output_schema: PublicReflection}
+  - {id: audit_response, kind: llm_decision, handler: run_decision, prompt_ref: audit_response, output_schema: AuditDecision}
+  - {id: repair_response, kind: llm_action, handler: run_action, prompt_ref: repair_response, output_schema: PublicReflection}
+  - {id: prepare_public_view, kind: deterministic, handler: prepare_public_view}
+  - {id: await_input, kind: interrupt, handler: await_input}
+  - {id: integrate_reply, kind: deterministic, handler: integrate_reply}
+  - {id: supportive_pause, kind: deterministic, handler: supportive_pause}
+  - {id: safe_fallback, kind: deterministic, handler: safe_fallback}
+  - {id: recoverable_error, kind: deterministic, handler: recoverable_error}
+  - {id: complete, kind: deterministic, handler: complete}
+
+edges:
+  - {source: ingest_turn, target: safety_decision}
+  - {source: safety_decision, target: segment_statements, outcome: continue_reflection}
+  - {source: safety_decision, target: supportive_pause, outcome: pause_for_support}
+  - {source: safety_decision, target: recoverable_error, outcome: unavailable}
+  - {source: segment_statements, target: choose_path}
+  - {source: choose_path, target: request_focus, outcome: request_focus}
+  - {source: choose_path, target: inspect_hurt, outcome: hurt}
+  - {source: choose_path, target: inspect_desire, outcome: desire}
+  - {source: choose_path, target: inspect_fear, outcome: fear}
+  - {source: choose_path, target: inspect_judgement, outcome: judgement}
+  - {source: choose_path, target: inspect_unrelatability, outcome: unrelatability}
+  - {source: choose_path, target: inspect_ignorance, outcome: ignorance}
+  - {source: choose_path, target: inspect_general, outcome: general}
+  - {source: request_focus, target: prepare_public_view}
+  - {source: inspect_hurt, target: choose_next}
+  - {source: inspect_desire, target: choose_next}
+  - {source: inspect_fear, target: choose_next}
+  - {source: inspect_judgement, target: choose_next}
+  - {source: inspect_unrelatability, target: choose_next}
+  - {source: inspect_ignorance, target: choose_next}
+  - {source: inspect_general, target: choose_next}
+  - {source: choose_next, target: retrieve_context, outcome: retrieve_context}
+  - {source: choose_next, target: build_hypotheses, outcome: build_hypotheses}
+  - {source: choose_next, target: inspect_hurt, outcome: hurt}
+  - {source: choose_next, target: inspect_desire, outcome: desire}
+  - {source: choose_next, target: inspect_fear, outcome: fear}
+  - {source: choose_next, target: inspect_judgement, outcome: judgement}
+  - {source: choose_next, target: inspect_unrelatability, outcome: unrelatability}
+  - {source: choose_next, target: inspect_ignorance, outcome: ignorance}
+  - {source: retrieve_context, target: build_hypotheses}
+  - {source: build_hypotheses, target: decide_inquiry}
+  - {source: decide_inquiry, target: compose_response, outcome: ask_question}
+  - {source: decide_inquiry, target: compose_response, outcome: summarize}
+  - {source: decide_inquiry, target: compose_response, outcome: insufficient_information}
+  - {source: compose_response, target: audit_response}
+  - {source: audit_response, target: prepare_public_view, outcome: accept}
+  - {source: audit_response, target: repair_response, outcome: repair_once}
+  - {source: audit_response, target: safe_fallback, outcome: safe_fallback}
+  - {source: repair_response, target: audit_response}
+  - {source: prepare_public_view, target: await_input, outcome: await_input}
+  - {source: prepare_public_view, target: complete, outcome: complete}
+  - {source: await_input, target: integrate_reply}
+  - {source: integrate_reply, target: safety_decision, outcome: answer}
+  - {source: integrate_reply, target: safety_decision, outcome: correction}
+  - {source: integrate_reply, target: compose_response, outcome: skip}
+  - {source: integrate_reply, target: complete, outcome: finish}
+  - {source: supportive_pause, target: complete}
+  - {source: safe_fallback, target: complete}
+  - {source: recoverable_error, target: complete}
+
+prompt_manifest:
+  shared_policy: ../prompts/shared_policy.txt
+  safety_decision: ../prompts/safety_decision.txt
+  segment_statements: ../prompts/segment_statements.txt
+  choose_path: ../prompts/choose_path.txt
+  inspect_hurt: ../prompts/inspect_hurt.txt
+  inspect_desire: ../prompts/inspect_desire.txt
+  inspect_fear: ../prompts/inspect_fear.txt
+  inspect_judgement: ../prompts/inspect_judgement.txt
+  inspect_unrelatability: ../prompts/inspect_unrelatability.txt
+  inspect_ignorance: ../prompts/inspect_ignorance.txt
+  inspect_general: ../prompts/inspect_general.txt
+  choose_next: ../prompts/choose_next.txt
+  build_hypotheses: ../prompts/build_hypotheses.txt
+  decide_inquiry: ../prompts/decide_inquiry.txt
+  compose_response: ../prompts/compose_response.txt
+  audit_response: ../prompts/audit_response.txt
+  repair_response: ../prompts/repair_response.txt

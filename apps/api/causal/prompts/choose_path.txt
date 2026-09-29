@@ -1,0 +1,5 @@
+DECISION: Select hurt, desire, fear, judgement, unrelatability, ignorance, general, or request_focus.
+
+Respect an explicit user focus. Select the best-supported lens for that focus while preserving secondary lenses in state. Use general when the six lenses fit poorly. Use request_focus when several unrelated statements compete and no focus is selected. Do not force certainty to satisfy the enum.
+
+Return the decision, evidence IDs, and a brief decision summary.

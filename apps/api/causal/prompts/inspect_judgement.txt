@@ -1,0 +1,1 @@
+ACTION: Examine the selected judgement. Restate the assumed problem concretely. Separate reported conduct, consequences, value judgements, and conclusions about a whole person. Record support, counterevidence, alternative explanations, accountability, and uncertainty. Return a PathFinding.

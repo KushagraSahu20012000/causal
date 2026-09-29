@@ -1,0 +1,1 @@
+ACTION: Examine the selected hurt-related statement. Identify the reported loss, injury, violated expectation, or crossed boundary. Consider a wanted/current-state gap and specific missing context as alternatives without weakening evidence of actual harm. Return a PathFinding with evidence IDs, uncertainties, and boundary implications.

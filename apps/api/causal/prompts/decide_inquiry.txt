@@ -1,0 +1,1 @@
+DECISION: Select ask_question, summarize, or insufficient_information. Ask only when one neutral answer could materially distinguish active hypotheses, alter the route, or clarify a relevant boundary and the question budget permits it. Otherwise summarize or acknowledge insufficiency. Return the decision, evidence IDs, tested hypothesis IDs, and the missing distinction.

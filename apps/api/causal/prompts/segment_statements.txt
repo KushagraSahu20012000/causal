@@ -1,0 +1,5 @@
+ACTION: Separate the selected input into the smallest meaningful statements.
+
+For each statement, preserve its verbatim text and character span. Distinguish reported occurrences, experienced feelings, interpretations, difficulty relating, missing context, and other or unclear material. Assign multiple lenses only when supported. Do not convert a report into an externally verified fact. Preserve speaker and subject attribution.
+
+Return only the SegmentationResult schema.

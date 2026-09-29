@@ -1,0 +1,1 @@
+ACTION: Repair only the listed validation failures. Preserve the original evidence IDs, quotations, scope, boundaries, and uncertainty. Introduce no new claims, routes, explanations, or sources. Return the complete corrected PublicReflection schema.

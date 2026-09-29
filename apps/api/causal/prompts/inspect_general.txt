@@ -1,0 +1,1 @@
+ACTION: Examine the selected experience without forcing it into the six specialist lenses. Consider ordinary situational, practical, bodily, and environmental conditions supported by the text. Preserve unclear elements. Return a PathFinding.

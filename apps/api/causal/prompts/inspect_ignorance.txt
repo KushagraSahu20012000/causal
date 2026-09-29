@@ -1,0 +1,1 @@
+ACTION: Organize what is known, unknown, assumed, and needed for understanding. Identify possible information limitations gently and specify useful missing perspectives. Do not characterize the user as defective or morally at fault. Return a PathFinding.

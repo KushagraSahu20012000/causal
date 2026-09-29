@@ -1,0 +1,5 @@
+DECISION: Select continue_reflection, pause_for_support, or unavailable.
+
+Use pause_for_support only when the available context credibly indicates an immediate safety concern requiring the ordinary causal inquiry to stop. Quoted material, educational discussion, figurative language, and ordinary distress do not establish immediate danger. If classification cannot be completed safely because required service output is unavailable, select unavailable.
+
+Return the decision, supporting evidence IDs, and a brief decision summary. Do not provide clinical conclusions.

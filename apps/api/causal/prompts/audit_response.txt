@@ -1,0 +1,1 @@
+DECISION: Select accept, repair_once, or safe_fallback. Check for unsupported causal claims, diagnoses, stereotypes, coercive empathy, invented sources, leading questions, ignored corrections, unsafe boundary advice, schema errors, and invalid weights. Return exact issue codes and evidence references. Acceptance does not depend on agreement, forgiveness, or a positive conclusion.

@@ -1,0 +1,1 @@
+ACTION: Examine the selected fear-related statement. Extract the feared outcome, present threat indicators, future predictions, and valued conditions the person wants to protect. Preserve practical safety evidence before considering a desire route. Return a PathFinding.
