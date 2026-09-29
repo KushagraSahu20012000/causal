@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: causal-api
+    runtime: docker
+    rootDir: apps/api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SESSION_TTL_HOURS
+        value: "24"
+      - key: DATABASE_POOL_SIZE
+        value: "5"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: LANGGRAPH_AES_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

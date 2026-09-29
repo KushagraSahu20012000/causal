@@ -68,6 +68,14 @@ textarea::placeholder { color: #737b75; }
 .pill { background: #f0e5d5; color: #654416; }
 blockquote { margin: 18px 0; font-family: var(--serif); font-size: 1.3rem; line-height: 1.55; overflow-wrap: anywhere; }
 .statement-card > p { margin: 0; color: var(--muted); font-size: .85rem; }
+.focus-options { display: grid; gap: 10px; margin-top: 22px; }
+.focus-option { padding: 14px 16px; border: 1px solid var(--control-border); border-radius: 8px; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+.focus-option:hover { border-color: var(--forest); }
+.focus-option:disabled { cursor: not-allowed; opacity: .6; }
+.follow-up { display: grid; gap: 12px; margin-top: 22px; }
+.follow-up label { font-weight: 700; }
+.follow-up textarea { min-height: 130px; border-radius: 8px; }
+.follow-up .primary-button { justify-self: start; }
 
 .anatomy { padding: clamp(64px, 9vw, 120px) 6vw; background: var(--ink); color: #f8f6f0; }
 .anatomy .kicker { color: #aac4b8; }

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const apiOrigin = process.env.CAUSAL_API_ORIGIN;
+const apiOrigin = process.env.CAUSAL_API_ORIGIN?.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   async rewrites() {

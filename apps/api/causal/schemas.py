@@ -230,7 +230,7 @@ class ReflectionRequest(StrictModel):
 
 
 class ReflectionResumeRequest(StrictModel):
-    thread_id: str = Field(min_length=32, max_length=64)
+    thread_id: str = Field(min_length=48, max_length=48, pattern=r"^[0-9a-f]{48}$")
     action: Literal["answer", "correction", "select_focus", "skip", "finish"]
     text: str | None = Field(default=None, max_length=6_000)
     focus_id: str | None = Field(default=None, max_length=200)

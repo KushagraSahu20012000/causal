@@ -1,12 +1,19 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const MAX_LENGTH = 6000;
+const SESSION_KEY = "causal_reflection_thread";
+
+type Statement = {
+  id: string;
+  text: string;
+};
 
 type PublicReflection = {
   status: string;
   summary: string;
+  statements: Statement[];
   understanding: string | null;
   boundary: string | null;
   responsibility: string | null;
@@ -33,9 +40,41 @@ function ArrowIcon() {
 export default function Home() {
   const [text, setText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
+  const [answer, setAnswer] = useState("");
   const [turn, setTurn] = useState<ReflectionTurn | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const threadId = window.localStorage.getItem(SESSION_KEY);
+    if (!threadId) return;
+
+    void fetch(`/api/v1/reflections/${threadId}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          window.localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+        return response.json() as Promise<ReflectionTurn>;
+      })
+      .then((restoredTurn) => {
+        if (restoredTurn) setTurn(restoredTurn);
+      })
+      .catch(() => {
+        // A fresh submission remains available when restoration is temporarily unavailable.
+      });
+  }, []);
+
+  function acceptTurn(nextTurn: ReflectionTurn) {
+    setTurn(nextTurn);
+    window.localStorage.setItem(SESSION_KEY, nextTurn.thread_id);
+  }
+
+  async function responseBody(response: Response) {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.detail || "Reflection request failed.");
+    return body as ReflectionTurn;
+  }
 
   async function submitReflection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,16 +85,66 @@ export default function Home() {
     setError("");
     setIsLoading(true);
     try {
-      const response = await fetch("/api/v1/dev/reflections", {
+      const response = await fetch("/api/v1/reflections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: value }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.detail || "Reflection request failed.");
-      setTurn(body as ReflectionTurn);
+      acceptTurn(await responseBody(response));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Reflection request failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function resumeReflection(action: "answer" | "select_focus", value: string) {
+    if (!turn || isLoading) return;
+    setError("");
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/v1/reflections/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          thread_id: turn.thread_id,
+          action,
+          ...(action === "answer" ? { text: value } : { focus_id: value }),
+        }),
+      });
+      acceptTurn(await responseBody(response));
+      setAnswer("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Reflection request failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function submitAnswer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = answer.trim();
+    if (value) await resumeReflection("answer", value);
+  }
+
+  async function deleteSession() {
+    if (!turn || isLoading) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/v1/reflections/${turn.thread_id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok && response.status !== 404 && response.status !== 410) {
+        await responseBody(response);
+      }
+      window.localStorage.removeItem(SESSION_KEY);
+      setTurn(null);
+      setSubmittedText("");
+      setText("");
+      setAnswer("");
+      setError("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Session deletion failed.");
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +158,8 @@ export default function Home() {
           <span>Causal</span>
         </a>
         <div className="header-actions">
-          <span className="status-dot"><i /> Live workflow test</span>
-          <button className="text-button" type="button" disabled>Delete session</button>
+          <span className="status-dot"><i /> Private 24-hour session</span>
+          <button className="text-button" type="button" disabled={!turn || isLoading} onClick={deleteSession}>Delete session</button>
         </div>
       </header>
 
@@ -107,7 +196,7 @@ export default function Home() {
             </form>
             <p className="privacy-note">
               <span aria-hidden="true">◇</span>
-              Local workflow testing uses the configured model provider. Do not enter identifying details.
+              Sessions expire after 24 hours. Avoid entering names or identifying details.
             </p>
           </div>
         </div>
@@ -126,7 +215,7 @@ export default function Home() {
         </aside>
       </section>
 
-      {submittedText && (
+      {(submittedText || turn) && (
         <section className="captured" aria-live="polite">
           <div className="section-number" aria-hidden="true">02</div>
           <div className="captured-content">
@@ -134,7 +223,7 @@ export default function Home() {
             <h2>Your words remain the source.</h2>
             <article className="statement-card">
               <span className="pill">{isLoading ? "Analyzing" : turn?.public_view.status || "Submitted"}</span>
-              <blockquote>{submittedText}</blockquote>
+              {submittedText && <blockquote>{submittedText}</blockquote>}
               {error && <p role="alert">{error}</p>}
               {turn && (
                 <div>
@@ -143,6 +232,35 @@ export default function Home() {
                   {turn.public_view.boundary && <p><strong>Boundary:</strong> {turn.public_view.boundary}</p>}
                   {turn.public_view.responsibility && <p><strong>Responsibility:</strong> {turn.public_view.responsibility}</p>}
                   {turn.public_view.pending_question && <p><strong>Question:</strong> {turn.public_view.pending_question.text}</p>}
+                  {turn.awaiting_input && turn.public_view.status === "awaiting_focus" && (
+                    <div className="focus-options" aria-label="Choose a reflection strand">
+                      {turn.public_view.statements.map((statement) => (
+                        <button
+                          className="focus-option"
+                          type="button"
+                          key={statement.id}
+                          disabled={isLoading}
+                          onClick={() => resumeReflection("select_focus", statement.id)}
+                        >
+                          {statement.text}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {turn.awaiting_input && turn.public_view.status === "awaiting_answer" && (
+                    <form className="follow-up" onSubmit={submitAnswer}>
+                      <label htmlFor="follow-up-answer">Your answer</label>
+                      <textarea
+                        id="follow-up-answer"
+                        value={answer}
+                        maxLength={MAX_LENGTH}
+                        onChange={(event) => setAnswer(event.target.value)}
+                      />
+                      <button className="primary-button" type="submit" disabled={!answer.trim() || isLoading}>
+                        {isLoading ? "Continuing…" : "Continue reflection"}
+                      </button>
+                    </form>
+                  )}
                 </div>
               )}
             </article>

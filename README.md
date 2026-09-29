@@ -10,4 +10,12 @@ A guided reflection workspace for examining the conditions that may shape a thou
 
 ## Status
 
-The project is in active foundation development. The current interface uses local demonstration data. Model inference and persistent anonymous sessions are not enabled until provider and retention settings are explicitly configured.
+The graph, public API, model runtime, and encrypted anonymous session persistence are implemented. Sessions use Neon Postgres and expire after 24 hours.
+
+## Production topology
+
+- Deploy `apps/web` to Vercel.
+- Deploy `apps/api` to Railway or Render using its Dockerfile.
+- Configure Neon Postgres and Groq through deployment secrets.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete deployment checklist.
